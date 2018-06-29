@@ -1,0 +1,57 @@
+package com.rgamba.falcon;
+
+import org.testng.annotations.DataProvider;
+import org.testng.annotations.Test;
+
+import java.security.InvalidParameterException;
+
+import static org.testng.Assert.*;
+
+public class HeaderTest {
+
+    @DataProvider
+    private Object[][] headerTestInput() {
+        //@formatter:off
+        return new Object[][]{
+                // Header string                Expected name   Expected value
+                {"Content-Type: text/plain",    "Content-Type", "text/plain"},
+                {" Content-Type: text:plain ",  "Content-Type", "text:plain"},
+        };
+        //@formatter:on
+    }
+
+    @Test(dataProvider = "headerTestInput")
+    public void testParseString(String headerStr, String expName, String expValue) {
+        Header h = Header.parse(headerStr);
+        assertEquals(h.getName(), expName);
+        assertEquals(h.getValue(), expValue);
+    }
+
+    @DataProvider
+    private Object[][] headerInvalidInput() {
+        return new Object[][]{
+                {""},
+                {"invalid input"},
+                {" "}
+        };
+    }
+
+    @Test(dataProvider = "headerInvalidInput", expectedExceptions = InvalidParameterException.class)
+    public void testParseStringInvalidInput(String input) {
+        Header.parse(input);
+    }
+
+    @Test
+    public void testToString() {
+        Header h = new Header("Content-type", "text/html");
+        assertEquals(h.toString(), "Content-type: text/html");
+    }
+
+    @Test
+    public void testEquals() {
+        Header h1 = new Header("Content-Type", "text/html");
+        Header h2 = new Header("CONTENT-TYPE", "text/html");
+
+        assertTrue(h1.equals(h2));
+    }
+}
