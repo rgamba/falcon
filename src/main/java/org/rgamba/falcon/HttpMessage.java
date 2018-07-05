@@ -1,4 +1,4 @@
-package com.rgamba.falcon;
+package org.rgamba.falcon;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;

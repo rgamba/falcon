@@ -1,4 +1,4 @@
-package com.rgamba.falcon;
+package org.rgamba.falcon;
 
 import java.io.InputStreamReader;
 import java.net.SocketAddress;

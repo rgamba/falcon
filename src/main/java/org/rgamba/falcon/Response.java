@@ -1,4 +1,4 @@
-package com.rgamba.falcon;
+package org.rgamba.falcon;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;

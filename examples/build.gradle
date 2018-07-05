@@ -1,0 +1,19 @@
+group 'org.rgamba.falcon.examples'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+apply plugin: 'idea'
+apply plugin: 'application'
+
+sourceCompatibility = 1.8
+mainClassName = "org.rgamba.falcon.examples.SimpleServer"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile project(':falcon')
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+

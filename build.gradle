@@ -1,7 +1,7 @@
 apply plugin: 'java'
 apply plugin: 'idea'
 
-group 'com.rgamba.falcon'
+group 'org.rgamba.falcon'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
