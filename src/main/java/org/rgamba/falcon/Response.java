@@ -73,6 +73,14 @@ public class Response implements HttpMessage {
         statusNames.getOrDefault(_status_code, ""));
   }
 
+  public String getBody() {
+    return _body;
+  }
+
+  public int getStatusCode() {
+    return _status_code;
+  }
+
   /**
    * Response builder.
    */
@@ -139,6 +147,8 @@ public class Response implements HttpMessage {
       return String.valueOf(code);
     }
 
-    public int getCode() { return code; }
+    public int getCode() {
+      return code;
+    }
   }
 }
