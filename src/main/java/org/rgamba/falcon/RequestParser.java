@@ -9,7 +9,7 @@ import java.net.SocketAddress;
 /**
  * Request Parser
  *
- * Parse the raw HTTP request message and create
+ * <p>Parse the raw HTTP request message and create
  * a request object that's usable by the request handlers.
  */
 public class RequestParser {
@@ -32,7 +32,9 @@ public class RequestParser {
 
   /**
    * Parse the request and get a usable Request object
-   * This method should only be called once per request
+   *
+   * <p>This method should only be called once per request
+   *
    * @return Request object ready to use
    * @throws Exception In case an invalid message was sent
    */

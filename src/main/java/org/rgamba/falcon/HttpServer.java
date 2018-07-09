@@ -13,6 +13,10 @@ public class HttpServer {
     _handler = handler;
   }
 
+  public void setHandler(Router router) {
+    setHandler(router::handle);
+  }
+
   public void listen(int port) {
     try (ServerSocket socket = new ServerSocket(port)) {
       while (true) {

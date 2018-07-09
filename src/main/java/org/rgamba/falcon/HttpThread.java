@@ -6,10 +6,10 @@ import java.util.function.Function;
 
 
 public class HttpThread implements Runnable {
-  private Socket _client;
-  private OutputStreamWriter _out;
-  private InputStreamReader _in;
-  private Function<Request, Response> _handler;
+  private final Socket _client;
+  private final OutputStreamWriter _out;
+  private final InputStreamReader _in;
+  private final Function<Request, Response> _handler;
 
   HttpThread(Socket client, Function<Request, Response> handler) throws IOException {
     _client = client;

@@ -5,13 +5,13 @@ import java.net.SocketAddress;
 
 
 /**
- * Http Request
+ * Request
  *
- * This represents an HTTP Request message. It will be initiated
+ * <p>This represents an HTTP Request message. It will be initiated
  * by the client, parsed and passed along to to the appropriate
  * listener so it can generate a valid Response.
  *
- * https://tools.ietf.org/html/rfc2616#page-35
+ * @see <a  href="https://tools.ietf.org/html/rfc2616#page-35">HTTP RFC request</a>
  */
 public class Request implements HttpMessage {
   private final Type _type;
@@ -28,12 +28,28 @@ public class Request implements HttpMessage {
     _uri = builder.uri;
   }
 
+  /**
+   * Copy Constructor
+   */
+  public Request(Request request) {
+    _type = request.getType();
+    _headers = request.getHeaders();
+    _remoteAddress = request.getRemoteAddress();
+    _bodyReader = request.getBodyReader();
+    _uri = request.getUri();
+  }
+
+  @Override
+  public Request copy() {
+    return new Request(this);
+  }
+
   public Type getType() {
     return _type;
   }
 
   public Headers getHeaders() {
-    return _headers;
+    return new Headers(_headers);
   }
 
   public SocketAddress getRemoteAddress() {
@@ -98,7 +114,7 @@ public class Request implements HttpMessage {
     }
 
     public Builder setHeaders(Headers headers) {
-      this.headers = headers;
+      this.headers = new Headers(headers);
       return this;
     }
 

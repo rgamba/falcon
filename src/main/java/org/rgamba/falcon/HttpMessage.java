@@ -6,6 +6,8 @@ import java.util.Locale;
 
 
 public interface HttpMessage {
+  HttpMessage copy();
+
   /**
    * Format the given date to a string format allowed and expected
    * by HTTP, RFC 822. See:

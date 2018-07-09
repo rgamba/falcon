@@ -22,6 +22,14 @@ public class Header implements Comparable<Header> {
     _value = value;
   }
 
+  /**
+   * Copy constructor
+   */
+  Header(Header header) {
+    _name = header.getName();
+    _value = header.getValue();
+  }
+
   public String getName() {
     return _name;
   }

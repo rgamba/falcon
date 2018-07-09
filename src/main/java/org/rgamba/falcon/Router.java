@@ -11,13 +11,13 @@ import org.rgamba.falcon.errors.ServerError;
 /**
  * Http Request Router.
  *
- * The router is an optional element that will take care of
+ * <p>The router is an optional element that will take care of
  * handling and routing all requests based on the request method and
  * the path (uri). The client should first map each path to the
- * corresponding RequestHandler (Class<? extends RequestHandler>)
+ * corresponding RequestHandler ({@code Class<? extends RequestHandler>})
  * That way, the router will know how to route each call.
  *
- * It will also take care of gracefully handle exceptions and covert
+ * <p>It will also take care of gracefully handle exceptions and covert
  * them to response objects with the appropriate status code errors.
  */
 public class Router {

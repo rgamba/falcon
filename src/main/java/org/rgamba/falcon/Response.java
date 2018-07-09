@@ -10,13 +10,13 @@ import java.util.Map;
 /**
  * Response
  *
- * HTTP Response object that will be sent out by the
+ * <p>HTTP Response object that will be sent out by the
  * handler and will write directly to the socket output stream writer.
  */
 public class Response implements HttpMessage {
-  private Headers _headers;
-  private int _status_code;
-  private String _body;
+  private final Headers _headers;
+  private final int _status_code;
+  private final String _body;
 
   private static final Map<Integer, String> statusNames;
 
@@ -38,6 +38,20 @@ public class Response implements HttpMessage {
     _body = builder.body;
   }
 
+  /**
+   * Constructor copy
+   */
+  public Response(Response resp) {
+    _headers = resp.getHeaders();
+    _status_code = resp.getStatusCode();
+    _body = resp.getBody();
+  }
+
+  @Override
+  public Response copy() {
+    return new Response(this);
+  }
+
   private void setDefaultHeaders() {
     _headers.set("Server", HttpConstants.DEFAULT_HEADER_SERVER_NAME);
     _headers.set("Date", HttpMessage.formatDate(new Date()));
@@ -47,7 +61,7 @@ public class Response implements HttpMessage {
   /**
    * Write the response to the OutputStreamWriter
    * The response format will be:
-   *
+   * <p>
    * <status-line> + CRLF
    * *(<header> + CRLF )
    * CRLF
@@ -79,6 +93,10 @@ public class Response implements HttpMessage {
 
   public int getStatusCode() {
     return _status_code;
+  }
+
+  public Headers getHeaders() {
+    return new Headers(_headers);
   }
 
   /**

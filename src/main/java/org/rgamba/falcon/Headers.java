@@ -7,11 +7,25 @@ import java.util.List;
 import java.util.Map;
 
 
+/**
+ * Headers
+ *
+ * <p>This class serves as a container for {@link Header}
+ * providing several convenience methods to create and represent
+ * a group of headers.
+ */
 public class Headers {
   Map<String, Header> _headers;
 
   Headers() {
     _headers = new HashMap<>();
+  }
+
+  Headers(Headers headers) {
+    _headers = new HashMap<>();
+    for (Header h : headers.toArray()) {
+      set(h);
+    }
   }
 
   public void set(String name, String value) {
@@ -23,7 +37,7 @@ public class Headers {
   }
 
   public void set(Header header) {
-    _headers.put(header.getName().toUpperCase(), header);
+    _headers.put(header.getName().toUpperCase(), new Header(header));
   }
 
   public void remove(String name) {
@@ -48,6 +62,7 @@ public class Headers {
     if (!contains(name)) {
       return null;
     }
-    return _headers.get(name.toUpperCase());
+    Header header = _headers.get(name.toUpperCase());
+    return new Header(header.getName(), header.getValue()); // Make it immutable
   }
 }
