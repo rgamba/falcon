@@ -19,6 +19,8 @@ public class RouterTest {
     return new Request.Builder().setType(type).setUri(uri).build();
   }
 
+  // Request handler classes below
+
   public static class LoginHandler implements RequestHandler {
     @Override
     public Response get(Request req) {

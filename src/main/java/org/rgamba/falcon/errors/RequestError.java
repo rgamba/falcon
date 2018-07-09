@@ -1,4 +1,4 @@
 package org.rgamba.falcon.errors;
 
-public class RequestError extends Exception {
+public class RequestError extends RuntimeException {
 }
