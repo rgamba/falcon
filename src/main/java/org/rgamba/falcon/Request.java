@@ -107,6 +107,17 @@ public class Request implements HttpMessage {
     private InputStreamReader bodyReader;
     private String uri;
 
+    public Builder() {
+    }
+
+    public Builder(Request request) {
+      type = request.getType();
+      headers = request.getHeaders();
+      remoteAddress = request.getRemoteAddress();
+      bodyReader = request.getBodyReader();
+      uri = request.getUri();
+    }
+
     public Builder setType(Type type) {
       this.type = type;
       this.headers = new Headers();
@@ -120,6 +131,11 @@ public class Request implements HttpMessage {
 
     public Builder setHeader(String headerString) {
       this.headers.set(headerString);
+      return this;
+    }
+
+    public Builder setHeader(String name, String value) {
+      this.headers.set(name, value);
       return this;
     }
 

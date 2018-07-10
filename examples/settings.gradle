@@ -1,3 +1,0 @@
-include ':falcon'
-project(':falcon').projectDir = new File(settingsDir, '../')
-

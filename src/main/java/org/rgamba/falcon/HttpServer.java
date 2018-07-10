@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 public class HttpServer {
   private Function<Request, Response> _handler;
+  private final MiddlewareSet _middlewareSet = new MiddlewareSet();
 
   public void setHandler(Function<Request, Response> handler) {
     _handler = handler;

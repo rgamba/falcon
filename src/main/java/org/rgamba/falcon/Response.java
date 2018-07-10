@@ -84,7 +84,7 @@ public class Response implements HttpMessage {
 
   private String getStatusLine() {
     return String.format("HTTP/%s %d %s", HttpConstants.DEFAULT_HTTP_VERSION, _status_code,
-        statusNames.getOrDefault(_status_code, ""));
+            statusNames.getOrDefault(_status_code, ""));
   }
 
   public String getBody() {
@@ -106,6 +106,16 @@ public class Response implements HttpMessage {
     private Headers headers = new Headers();
     private int status_code = 200;
     private String body;
+
+    public Builder() {
+
+    }
+
+    public Builder(Response resp) {
+      headers = resp.getHeaders();
+      status_code = resp.getStatusCode();
+      body = resp.getBody();
+    }
 
     public Builder setHeader(String name, String value) {
       headers.set(name, value);

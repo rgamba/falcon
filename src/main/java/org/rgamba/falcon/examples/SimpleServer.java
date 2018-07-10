@@ -1,13 +1,12 @@
 package org.rgamba.falcon.examples;
 
-import org.rgamba.falcon.HttpServer;
-import org.rgamba.falcon.Request;
-import org.rgamba.falcon.Response;
+import org.rgamba.falcon.*;
 
 public class SimpleServer {
   public static void main(String[] args) {
     System.out.println("Started");
     HttpServer server = new HttpServer();
+    Router router = new Router();
     server.setHandler(SimpleServer::handleRequest);
     server.listen(8080);
     System.out.print("Finished");
