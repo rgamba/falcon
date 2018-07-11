@@ -13,14 +13,11 @@ import org.rgamba.falcon.Request;
 public class AppendSlashMiddleware implements Middleware {
   @Override
   public Request processRequest(Request request) {
-    if (request.getUri().endsWith("/")) {
+    if (request.getPath().endsWith("/")) {
       return request;
     }
-    return new Request.Builder().setHeaders(request.getHeaders())
-        .setBodyReader(request.getBodyReader())
-        .setType(request.getType())
-        .setUri(request.getUri() + "/")
-        .setRemoteAddress(request.getRemoteAddress())
+    return new Request.Builder(request)
+        .setPath(request.getPath() + "/")
         .build();
   }
 }

@@ -3,9 +3,12 @@ package org.rgamba.falcon;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.SocketAddress;
 import java.net.URL;
+import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +48,16 @@ public class RequestParser {
    */
   public Request buildRequest() throws Exception {
     String[] requestLine = getRequestLine();
-    Request.Builder reqBuilder = new Request.Builder().setType(getMessageType(requestLine[0]))
-        .setUri(requestLine[1])
-        .setPath(extractPathFromUri(requestLine[1]))
+    final String messageType = requestLine[0];
+    final String uri = requestLine[1];
+    Request.Builder reqBuilder = new Request.Builder().setType(getMessageType(messageType))
+        .setUri(uri)
+        .setPath(extractPathFromUri(uri))
+        .setQueryParams(uriQueryStringToMap(getUriQueryString(uri)))
         .setRemoteAddress(_remoteAddress);
     String headerStr;
     int headerCount = 0;
-    while ((headerStr = getNextLine()) != null || headerCount < MAX_HEADERS) {
+    while ((headerStr = getNextLine()) != null && headerCount < MAX_HEADERS) {
       if (headerStr.trim().equals("")) {
         break;
       }
@@ -133,7 +139,7 @@ public class RequestParser {
     if (parts.length <= 1) {
       return "";
     }
-    return parts[1];
+    return parts[1].split("#", 2)[0];
   }
 
   private Map<String, List<String>> uriQueryStringToMap(String uriQueryString) {
@@ -141,7 +147,21 @@ public class RequestParser {
     String[] params = uriQueryString.split("&");
     for (String param : params) {
       String[] parts = param.split("=", 2);
-      
+      final String paramName = urlDecode(parts[0]);
+      final String paramValue = parts.length > 1 ? urlDecode(parts[1]) : "";
+      if (!result.containsKey(paramName)) {
+        result.put(paramName, new ArrayList<>());
+      }
+      result.get(paramName).add(paramValue);
+    }
+    return result;
+  }
+
+  private String urlDecode(String part) {
+    try {
+      return URLDecoder.decode(part, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      return "";
     }
   }
 }

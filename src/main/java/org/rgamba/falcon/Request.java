@@ -234,6 +234,14 @@ public class Request implements HttpMessage {
       return this;
     }
 
+    public Builder setQueryParams(Map<String, List<String>> queryParams) {
+      for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
+        String[] values = entry.getValue().toArray(new String[entry.getValue().size()]);
+        this.queryParams.put(entry.getKey(), new ArrayList<>(Arrays.asList(values)));
+      }
+      return this;
+    }
+
     public Request build() {
       return new Request(this);
     }

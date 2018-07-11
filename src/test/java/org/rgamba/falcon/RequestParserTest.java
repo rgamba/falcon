@@ -23,8 +23,20 @@ public class RequestParserTest {
   private String VALID_GET_REQUEST = "GET /home HTTP/1.1" + CRLF
     + "Host: mysite.com" + CRLF
     + "User-Agent: curl/7.49.1" + CRLF
-    + "Accept: */*" + CRLF
-    + "Content-Length: 17" + CRLF;
+    + "Accept: */*" + CRLF;
+
+  private String GET_REQ_WITH_QUERY_PARAMS = "GET /search?query=hello+world#stuff HTTP/1.1" + CRLF
+          + "Host: mysite.com" + CRLF
+          + "User-Agent: curl/7.49.1" + CRLF
+          + "Accept: */*" + CRLF;
+
+  private String GET_REQ_WITH_ABS_URI = "GET http://mysite.com:80/search?query=hello+world HTTP/1.1" + CRLF
+          + "User-Agent: curl/7.49.1" + CRLF
+          + "Accept: */*" + CRLF;
+
+  private String GET_REQ_WITH_INVALID_URI = "GET invalid:asd!/search?query=hello+world HTTP/1.1" + CRLF
+          + "User-Agent: curl/7.49.1" + CRLF
+          + "Accept: */*" + CRLF;
 
   private String INVALID_REQUEST = "INVALID / HTTP/1.1" + CRLF
     + "Host: google.com" + CRLF
@@ -49,21 +61,49 @@ public class RequestParserTest {
     assertEquals(req.getHeaders().get("HOST").getValue(), "mysite.com");
   }
 
+  @Test
+  public void testQueryParams() throws Exception {
+    InputStream is = new ByteArrayInputStream(GET_REQ_WITH_QUERY_PARAMS.getBytes());
+    Request req = new RequestParser(is, null).buildRequest();
+    assertEquals(req.getType(), Request.Type.GET);
+    assertEquals(req.getUri(), "/search?query=hello+world#stuff");
+    assertEquals(req.getPath(), "/search");
+    assertEquals(req.getQueryParam("query").size(), 1);
+    assertEquals(req.getQueryParam("query").get(0), "hello world");
+  }
+
+  @Test
+  public void testAbsoluteUri() throws Exception {
+    InputStream is = new ByteArrayInputStream(GET_REQ_WITH_ABS_URI.getBytes());
+    Request req = new RequestParser(is, null).buildRequest();
+    assertEquals(req.getType(), Request.Type.GET);
+    assertEquals(req.getUri(), "http://mysite.com:80/search?query=hello+world");
+    assertEquals(req.getPath(), "/search");
+    assertEquals(req.getQueryParam("query").size(), 1);
+    assertEquals(req.getQueryParam("query").get(0), "hello world");
+  }
+
   @Test(expectedExceptions = InternalError.class)
   public void invalidRequestType() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_REQUEST.getBytes());
-    Request req = new RequestParser(is, null).buildRequest();
+    new RequestParser(is, null).buildRequest();
+  }
+
+  @Test(expectedExceptions = Exception.class)
+  public void testInvalidUri() throws Exception {
+    InputStream is = new ByteArrayInputStream(GET_REQ_WITH_INVALID_URI.getBytes());
+    new RequestParser(is, null).buildRequest();
   }
 
   @Test(expectedExceptions = InternalError.class)
   public void invalidHttpVersion() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_HTTP_TAG.getBytes());
-    Request req = new RequestParser(is, null).buildRequest();
+    new RequestParser(is, null).buildRequest();
   }
 
   @Test(expectedExceptions = InternalError.class)
   public void invalidPath() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_PATH.getBytes());
-    Request req = new RequestParser(is, null).buildRequest();
+    new RequestParser(is, null).buildRequest();
   }
 }
