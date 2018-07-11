@@ -1,7 +1,7 @@
 package org.rgamba.falcon;
 
 import org.rgamba.falcon.errors.MethodNotImplemented;
-import org.rgamba.falcon.errors.RequestError;
+import org.rgamba.falcon.errors.HttpError;
 
 
 /**
@@ -14,23 +14,23 @@ import org.rgamba.falcon.errors.RequestError;
  * <p>The name of the method determines the HTTP request type.
  */
 public interface RequestHandler {
-  default Response get(Request request) throws RequestError {
+  default Response get(Request request) throws HttpError {
     throw new MethodNotImplemented();
   }
 
-  default Response post(Request request) throws RequestError {
+  default Response post(Request request) throws HttpError {
     throw new MethodNotImplemented();
   }
 
-  default Response put(Request request) throws RequestError {
+  default Response put(Request request) throws HttpError {
     throw new MethodNotImplemented();
   }
 
-  default Response delete(Request request) throws RequestError {
+  default Response delete(Request request) throws HttpError {
     throw new MethodNotImplemented();
   }
 
-  default Response head(Request request) throws RequestError {
+  default Response head(Request request) throws HttpError {
     throw new MethodNotImplemented();
   }
 }

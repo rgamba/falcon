@@ -3,6 +3,7 @@ package org.rgamba.falcon;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import org.rgamba.falcon.middleware.AppendSlashMiddleware;
+import org.rgamba.falcon.middleware.LoggerMiddleware;
 
 
 /**
@@ -14,7 +15,7 @@ import org.rgamba.falcon.middleware.AppendSlashMiddleware;
 public class MiddlewareSet {
   private final Set<Class<? extends Middleware>> _middleware = new LinkedHashSet<>();
 
-  MiddlewareSet() {
+  public MiddlewareSet() {
     registerCommonMiddleware();
   }
 
@@ -37,6 +38,7 @@ public class MiddlewareSet {
 
   private void registerCommonMiddleware() {
     register(AppendSlashMiddleware.class);
+    //register(LoggerMiddleware.class);
   }
 
   /**

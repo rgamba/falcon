@@ -1,4 +1,4 @@
 package org.rgamba.falcon.errors;
 
-public class MethodNotImplemented extends RequestError {
+public class MethodNotImplemented extends HttpError {
 }

@@ -3,7 +3,12 @@ package org.rgamba.falcon;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
 import java.net.SocketAddress;
+import java.net.URL;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -42,6 +47,7 @@ public class RequestParser {
     String[] requestLine = getRequestLine();
     Request.Builder reqBuilder = new Request.Builder().setType(getMessageType(requestLine[0]))
         .setUri(requestLine[1])
+        .setPath(extractPathFromUri(requestLine[1]))
         .setRemoteAddress(_remoteAddress);
     String headerStr;
     int headerCount = 0;
@@ -54,6 +60,19 @@ public class RequestParser {
     }
     reqBuilder.setBodyReader(_inputReader);
     return reqBuilder.build();
+  }
+
+  private String extractPathFromUri(String uri) throws Exception {
+    if (uri.equals("*") || uri.startsWith("/")) {
+      return uri.split("\\?")[0];
+    }
+    try {
+      URL url = new URL(uri);
+      return url.getPath();
+    } catch (MalformedURLException ex) {
+      // TODO: How should we response in this case?
+      throw new Exception("Invalid request URI");
+    }
   }
 
   private String[] getRequestLine() throws IOException {
@@ -107,5 +126,22 @@ public class RequestParser {
 
   private Request.Type getMessageType(String messageType) {
     return Request.Type.valueOf(messageType);
+  }
+
+  private String getUriQueryString(String uri) {
+    String[] parts = uri.split("\\?", 2);
+    if (parts.length <= 1) {
+      return "";
+    }
+    return parts[1];
+  }
+
+  private Map<String, List<String>> uriQueryStringToMap(String uriQueryString) {
+    Map<String, List<String>> result = new HashMap<>();
+    String[] params = uriQueryString.split("&");
+    for (String param : params) {
+      String[] parts = param.split("=", 2);
+      
+    }
   }
 }

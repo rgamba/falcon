@@ -7,8 +7,29 @@ import java.util.function.Function;
 
 
 public class HttpServer {
+  private final int _port;
+  private final MiddlewareSet _middlewareSet;
   private Function<Request, Response> _handler;
-  private final MiddlewareSet _middlewareSet = new MiddlewareSet();
+
+  public HttpServer() {
+    _port = 8080;
+    _middlewareSet = new MiddlewareSet();
+  }
+
+  public HttpServer(int port, MiddlewareSet middlewareSet) {
+    _port = port;
+    _middlewareSet = middlewareSet;
+  }
+
+  public HttpServer(int port, MiddlewareSet middlewareSet, Function<Request, Response> handler) {
+    _port = port;
+    _middlewareSet = middlewareSet;
+    _handler = handler;
+  }
+
+  public HttpServer(int port, MiddlewareSet middlewareSet, Router router) {
+    this(port, middlewareSet, router::handle);
+  }
 
   public void setHandler(Function<Request, Response> handler) {
     _handler = handler;
@@ -18,8 +39,8 @@ public class HttpServer {
     setHandler(router::handle);
   }
 
-  public void listen(int port) {
-    try (ServerSocket socket = new ServerSocket(port)) {
+  public void listen() {
+    try (ServerSocket socket = new ServerSocket(_port)) {
       while (true) {
         try (Socket client = socket.accept()) {
           createNewThread(client);
@@ -34,8 +55,7 @@ public class HttpServer {
 
   private void createNewThread(Socket client) throws IOException {
     client.setSoTimeout(5000);
-    System.out.println("Accepting connection from " + client.getRemoteSocketAddress().toString());
-    Runnable httpThread = new HttpThread(client, _handler);
+    Runnable httpThread = new HttpThread(client, _handler, _middlewareSet);
     Thread thread = new Thread(httpThread);
     thread.run();
   }

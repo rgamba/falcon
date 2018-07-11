@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import org.rgamba.falcon.errors.MethodNotImplemented;
-import org.rgamba.falcon.errors.RequestError;
+import org.rgamba.falcon.errors.HttpError;
 import org.rgamba.falcon.errors.ServerError;
 
 
@@ -23,11 +23,16 @@ import org.rgamba.falcon.errors.ServerError;
 public class Router {
   private Map<String, Class<? extends RequestHandler>> _routes = new HashMap<>();
 
+  /**
+   * Map a URI or path to a given {@link RequestHandler} class
+   * @param path The string path to map. For example "/home/" or "/login/". Index is "/"
+   * @param handler The {@link RequestHandler} class that will handle this request
+   */
   public void setHandler(String path, Class<? extends RequestHandler> handler) {
     _routes.put(path, handler);
   }
 
-  public Response handle(Request request) {
+  Response handle(Request request) {
     Class<? extends RequestHandler> handler = findHandler(request.getUri());
     if (handler == null) {
       return createResponseError(Response.Status.NOT_FOUND, "Not found");
@@ -52,7 +57,7 @@ public class Router {
       return createResponseError(Response.Status.METHOD_NOT_ALLOWED, e.toString());
     } catch (ServerError e) {
       return createResponseError(Response.Status.INTERNAL_ERROR, e.toString());
-    } catch (RequestError e) {
+    } catch (HttpError e) {
       return createResponseError(Response.Status.INTERNAL_ERROR, e.toString());
     }
   }

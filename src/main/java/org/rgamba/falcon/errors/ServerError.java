@@ -1,4 +1,5 @@
 package org.rgamba.falcon.errors;
 
-public class ServerError extends RequestError {
+public class ServerError extends HttpError {
+
 }
