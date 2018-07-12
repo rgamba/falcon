@@ -1,13 +1,12 @@
 package org.rgamba.falcon;
 
+import org.rgamba.falcon.errors.BadRequest;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.SocketAddress;
-import java.net.URL;
-import java.net.URLDecoder;
+import java.net.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -47,6 +46,10 @@ public class RequestParser {
    * @throws Exception In case an invalid message was sent
    */
   public Request buildRequest() throws Exception {
+    /*
+    First line:
+    GET /index.html HTTP/1.1
+    */
     String[] requestLine = getRequestLine();
     final String messageType = requestLine[0];
     final String uri = requestLine[1];
@@ -55,15 +58,54 @@ public class RequestParser {
         .setPath(extractPathFromUri(uri))
         .setQueryParams(uriQueryStringToMap(getUriQueryString(uri)))
         .setRemoteAddress(_remoteAddress);
+    /* URL part */
+    URI url = null;
+    try {
+      url = URI.create(uri);
+    } catch (IllegalArgumentException e) {
+      throw new BadRequest("invalid URL format");
+    }
+    /*
+    Header lines in the format:
+    Key: Value
+    */
     String headerStr;
     int headerCount = 0;
     while ((headerStr = getNextLine()) != null && headerCount < MAX_HEADERS) {
       if (headerStr.trim().equals("")) {
         break;
       }
-      reqBuilder.setHeader(headerStr);
+      Header newHeader = Header.parse(headerStr);
+      if (!HttpUtils.isValidToken(newHeader.getName())) {
+        throw new BadRequest("invalid request headers");
+      }
+      reqBuilder.setHeader(newHeader);
       headerCount++;
     }
+
+    /*
+    RFC 2616: Must treat
+    GET /index.html HTTP/1.1
+    Host: www.google.com
+     and
+    GET http://www.google.com/index.html HTTP/1.1
+    Host: ignore
+    the same. In the second case, any Host line is ignored.
+    */
+    if (url.getAuthority() == null && reqBuilder.headers.contains("Host")) {
+      String newUri = reqBuilder.headers.get("Host").getValue();
+      if (newUri.endsWith("/")) {
+        newUri = newUri.substring(0, newUri.length() - 1);
+      }
+      newUri = newUri + uri;
+      try {
+        url = URI.create(newUri);
+      } catch (IllegalArgumentException e) {
+        throw new BadRequest("Invalid URL format");
+      }
+    }
+
+    reqBuilder.setUrl(url);
     reqBuilder.setBodyReader(_inputReader);
     return reqBuilder.build();
   }
@@ -77,7 +119,7 @@ public class RequestParser {
       return url.getPath();
     } catch (MalformedURLException ex) {
       // TODO: How should we response in this case?
-      throw new Exception("Invalid request URI");
+      throw new BadRequest("invalid request URI");
     }
   }
 
@@ -89,11 +131,11 @@ public class RequestParser {
       reqLine = getNextLine();
     }
     if (reqLine == null) {
-      throw new InternalError("Invalid request line: " + reqLine);
+      throw new BadRequest("invalid request line");
     }
     String[] parts = reqLine.split(" ");
     if (parts.length < 3) {
-      throw new InternalError("Invalid request line: " + reqLine);
+      throw new BadRequest("invalid request line");
     }
     final String type = parts[0].trim().toUpperCase();
     validateRequestType(type);
@@ -107,12 +149,12 @@ public class RequestParser {
         return;
       }
     }
-    throw new InternalError("Invalid request type: " + t);
+    throw new BadRequest("invalid request type");
   }
 
   private void validateHttpVersion(String version) {
     if (!HttpConstants.PROTOCOL_VERSIONS.contains(version)) {
-      throw new InternalError("Invalid HTTP version: " + version);
+      throw new BadRequest("unsupported HTTP version");
     }
   }
 

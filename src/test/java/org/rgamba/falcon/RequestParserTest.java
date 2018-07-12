@@ -1,5 +1,6 @@
 package org.rgamba.falcon;
 
+import org.rgamba.falcon.errors.BadRequest;
 import org.testng.annotations.Test;
 
 import java.io.ByteArrayInputStream;
@@ -83,25 +84,25 @@ public class RequestParserTest {
     assertEquals(req.getQueryParam("query").get(0), "hello world");
   }
 
-  @Test(expectedExceptions = InternalError.class)
+  @Test(expectedExceptions = BadRequest.class)
   public void invalidRequestType() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_REQUEST.getBytes());
     new RequestParser(is, null).buildRequest();
   }
 
-  @Test(expectedExceptions = Exception.class)
+  @Test(expectedExceptions = BadRequest.class)
   public void testInvalidUri() throws Exception {
     InputStream is = new ByteArrayInputStream(GET_REQ_WITH_INVALID_URI.getBytes());
     new RequestParser(is, null).buildRequest();
   }
 
-  @Test(expectedExceptions = InternalError.class)
+  @Test(expectedExceptions = BadRequest.class)
   public void invalidHttpVersion() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_HTTP_TAG.getBytes());
     new RequestParser(is, null).buildRequest();
   }
 
-  @Test(expectedExceptions = InternalError.class)
+  @Test(expectedExceptions = BadRequest.class)
   public void invalidPath() throws Exception {
     InputStream is = new ByteArrayInputStream(INVALID_PATH.getBytes());
     new RequestParser(is, null).buildRequest();

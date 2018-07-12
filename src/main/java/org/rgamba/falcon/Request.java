@@ -2,6 +2,7 @@ package org.rgamba.falcon;
 
 import java.io.InputStreamReader;
 import java.net.SocketAddress;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,7 +25,9 @@ public class Request implements HttpMessage {
   private final SocketAddress _remoteAddress;
   private final InputStreamReader _bodyReader;
   private final String _uri;
+  private final URI _url;
   private final String _path;
+  private final String _host;
   private final Map<String, List<String>> _queryParams;
 
   /**
@@ -38,6 +41,8 @@ public class Request implements HttpMessage {
     _uri = builder.uri;
     _queryParams = builder.queryParams;
     _path = builder.path;
+    _host = builder.host;
+    _url = builder.url;
   }
 
   /**
@@ -51,6 +56,8 @@ public class Request implements HttpMessage {
     _uri = request.getUri();
     _queryParams = request.getQueryParams();
     _path = request.getPath();
+    _host = request.getHost();
+    _url = request.getUrl();
   }
 
   @Override
@@ -80,6 +87,14 @@ public class Request implements HttpMessage {
 
   public String getPath() {
     return _path;
+  }
+
+  public String getHost() {
+    return _host;
+  }
+
+  public URI getUrl() {
+    return _url;
   }
 
   /**
@@ -162,11 +177,13 @@ public class Request implements HttpMessage {
    */
   public static class Builder {
     private Type type;
-    private Headers headers;
+    Headers headers;
     private SocketAddress remoteAddress;
     private InputStreamReader bodyReader;
     private String uri;
     private String path;
+    private String host;
+    private URI url;
     private Map<String, List<String>> queryParams = new HashMap<>();
 
     public Builder() {
@@ -180,6 +197,8 @@ public class Request implements HttpMessage {
       uri = request.getUri();
       queryParams = request.getQueryParams();
       path = request.getPath();
+      host = request.getHost();
+      url = request.getUrl();
     }
 
     public Builder setType(Type type) {
@@ -195,6 +214,11 @@ public class Request implements HttpMessage {
 
     public Builder setHeader(String headerString) {
       this.headers.set(headerString);
+      return this;
+    }
+
+    public Builder setHeader(Header header) {
+      setHeader(header.getName(), header.getValue());
       return this;
     }
 
@@ -215,6 +239,16 @@ public class Request implements HttpMessage {
 
     public Builder setUri(String uri) {
       this.uri = uri;
+      return this;
+    }
+
+    public Builder setHost(String host) {
+      this.host = host;
+      return this;
+    }
+
+    public Builder setUrl(URI url) {
+      this.url = url;
       return this;
     }
 
