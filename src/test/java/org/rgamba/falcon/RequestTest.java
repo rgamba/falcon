@@ -2,6 +2,10 @@ package org.rgamba.falcon;
 
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+
 import static org.testng.Assert.*;
 
 
@@ -37,6 +41,35 @@ public class RequestTest {
     assertEquals(req.getQueryParam("names").get(1), "rodrigo");
     assertEquals(req.getQueryParam("names").size(), 2);
     assertEquals(req.getQueryParam("lastname").size(), 1);
+  }
+
+  @Test
+  public void testReadAllBody() {
+    Request.Builder reqBuilder = createRequestBuilder();
+    InputStream is = new ByteArrayInputStream("123456789".getBytes());
+    reqBuilder.setBodyReader(new InputStreamReader(is)).setContentLength((long) 9);
+    Request req = reqBuilder.build();
+
+    assertEquals(req.readAllBody(), "123456789");
+  }
+
+  @Test
+  public void testReadAllBodyLongContent() {
+    StringBuffer sb = new StringBuffer();
+    sb.append("0");
+    long i = 0;
+    for (i = 0; i < 5000; i++) {
+      sb.append('a');
+    }
+    sb.append('b');
+
+    Request.Builder reqBuilder = createRequestBuilder();
+    InputStream is = new ByteArrayInputStream(sb.toString().getBytes());
+    reqBuilder.setBodyReader(new InputStreamReader(is)).setContentLength((long) sb.length());
+    Request req = reqBuilder.build();
+
+    String actual = req.readAllBody();
+    assertEquals(actual, sb.toString());
   }
 
   private Request.Builder createRequestBuilder() {

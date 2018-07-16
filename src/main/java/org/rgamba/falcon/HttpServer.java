@@ -3,13 +3,18 @@ package org.rgamba.falcon;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 
 public class HttpServer {
+  private static final int MAX_THREADS = 10;
+  private final ExecutorService _threadPool = Executors.newCachedThreadPool();
   private final int _port;
   private final MiddlewareSet _middlewareSet;
   private Function<Request, Response> _handler;
+  private ServerSocket _socketServer;
 
   public HttpServer() {
     _port = 8080;
@@ -40,23 +45,29 @@ public class HttpServer {
   }
 
   public void listen() {
-    try (ServerSocket socket = new ServerSocket(_port)) {
-      while (true) {
-        try (Socket client = socket.accept()) {
-          createNewThread(client);
-        } catch (Exception threadEx) {
-          System.out.println("Thread ex: " + threadEx.getMessage());
-        }
+    openSocketServer();
+    while (true) {
+      try {
+        Socket client = _socketServer.accept();
+        createNewThread(client);
+      } catch (IOException e) {
+        System.out.println("Thread ex: " + e.getMessage());
       }
-    } catch (Exception e) {
-      System.out.println(e);
+    }
+  }
+
+  private void openSocketServer() {
+    try {
+      _socketServer = new ServerSocket(_port);
+    } catch (IOException e) {
+      System.out.println("Unable to open socket server");
     }
   }
 
   private void createNewThread(Socket client) throws IOException {
+    System.out.println("Creating new thread for client: " + client);
     client.setSoTimeout(5000);
     Runnable httpThread = new HttpThread(client, _handler, _middlewareSet);
-    Thread thread = new Thread(httpThread);
-    thread.run();
+    _threadPool.execute(httpThread);
   }
 }

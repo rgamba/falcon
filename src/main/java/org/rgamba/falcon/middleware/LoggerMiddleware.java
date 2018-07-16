@@ -21,7 +21,7 @@ public class LoggerMiddleware implements Middleware {
 
   @Override
   public Request processRequest(Request request) {
-    LOGGER.info("Incoming connection from " + request.getRemoteAddress().toString());
+    LOGGER.info(request.getType() + " - " + request.getPath() + " IP: " + request.getRemoteAddress().toString());
     return request;
   }
 }

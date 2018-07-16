@@ -1,5 +1,6 @@
 package org.rgamba.falcon;
 
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -28,6 +29,7 @@ public class Request implements HttpMessage {
   private final URI _url;
   private final String _path;
   private final String _host;
+  private final Long _contentLength;
   private final Map<String, List<String>> _queryParams;
 
   /**
@@ -43,6 +45,7 @@ public class Request implements HttpMessage {
     _path = builder.path;
     _host = builder.host;
     _url = builder.url;
+    _contentLength = builder.contentLength;
   }
 
   /**
@@ -58,6 +61,7 @@ public class Request implements HttpMessage {
     _path = request.getPath();
     _host = request.getHost();
     _url = request.getUrl();
+    _contentLength = request.getContentLength();
   }
 
   @Override
@@ -97,6 +101,10 @@ public class Request implements HttpMessage {
     return _url;
   }
 
+  public Long getContentLength() {
+    return _contentLength;
+  }
+
   /**
    * Read all the request body and return it as a string.
    *
@@ -108,19 +116,29 @@ public class Request implements HttpMessage {
    * @return string representation of the request body
    */
   public String readAllBody() {
-    Header contentLength = _headers.get("Content-Length");
-    if (contentLength == null) {
+    if (_contentLength == null) {
       return "";
     }
-    int length = Integer.valueOf(contentLength.getValue());
-    char[] buffer = new char[length];
-    try {
-      _bodyReader.read(buffer, 0, length - 1);
-      return String.valueOf(buffer);
-    } catch (Exception e) {
-      System.out.println(e);
-    }
-    return "";
+    StringBuffer body = new StringBuffer();
+    long step = 1024;
+    long ceil = 0;
+    long offset = 0;
+    do {
+      if (step > _contentLength - offset) {
+        ceil = _contentLength - offset;
+      } else {
+        ceil = step;
+      }
+      char[] buffer = new char[(int) ceil];
+      try {
+        _bodyReader.read(buffer, 0, (int) ceil);
+        body.append(buffer);
+      } catch (IOException ex) {
+
+      }
+      offset += ceil;
+    } while (offset < _contentLength);
+    return body.toString();
   }
 
   /**
@@ -170,6 +188,14 @@ public class Request implements HttpMessage {
     }
   }
 
+  public void close() {
+    try {
+      this._bodyReader.close();
+    } catch (IOException e) {
+
+    }
+  }
+
   /**
    * Request builder
    *
@@ -177,7 +203,7 @@ public class Request implements HttpMessage {
    */
   public static class Builder {
     private Type type;
-    Headers headers;
+    Headers headers = new Headers();
     private SocketAddress remoteAddress;
     private InputStreamReader bodyReader;
     private String uri;
@@ -185,6 +211,7 @@ public class Request implements HttpMessage {
     private String host;
     private URI url;
     private Map<String, List<String>> queryParams = new HashMap<>();
+    private Long contentLength;
 
     public Builder() {
     }
@@ -199,11 +226,11 @@ public class Request implements HttpMessage {
       path = request.getPath();
       host = request.getHost();
       url = request.getUrl();
+      contentLength = request.getContentLength();
     }
 
     public Builder setType(Type type) {
       this.type = type;
-      this.headers = new Headers();
       return this;
     }
 
@@ -254,6 +281,11 @@ public class Request implements HttpMessage {
 
     public Builder setPath(String path) {
       this.path = path;
+      return this;
+    }
+
+    public Builder setContentLength(Long contentLength) {
+      this.contentLength = contentLength;
       return this;
     }
 

@@ -38,7 +38,7 @@ public class MiddlewareSet {
 
   private void registerCommonMiddleware() {
     register(AppendSlashMiddleware.class);
-    //register(LoggerMiddleware.class);
+    register(LoggerMiddleware.class);
   }
 
   /**

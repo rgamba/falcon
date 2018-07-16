@@ -82,6 +82,9 @@ public class RequestParser {
       reqBuilder.setHeader(newHeader);
       headerCount++;
     }
+    if (reqBuilder.headers.contains("Content-Length")) {
+      reqBuilder.setContentLength(Long.parseLong(reqBuilder.headers.get("Content-Length").getValue()));
+    }
 
     /*
     RFC 2616: Must treat
@@ -162,10 +165,11 @@ public class RequestParser {
     StringBuilder header = new StringBuilder();
     int prevChar = 0;
     int curChar;
-    while ((curChar = _inputReader.read()) != -1) {
+    while ((curChar = _inputReader.read()) != -1) { // TODO: timeouts here!
       if (curChar == HttpConstants.LF_CHAR && prevChar == HttpConstants.CR_CHAR) {
         return header.toString();
       }
+
       header.append((char) curChar);
       prevChar = curChar;
     }
