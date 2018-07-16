@@ -72,6 +72,16 @@ public class RequestTest {
     assertEquals(actual, sb.toString());
   }
 
+  @Test
+  public void testWrongContentLength() {
+    Request.Builder reqBuilder = createRequestBuilder();
+    InputStream is = new ByteArrayInputStream("123456789".getBytes());
+    reqBuilder.setBodyReader(new InputStreamReader(is)).setContentLength((long) 10);
+    Request req = reqBuilder.build();
+    // readAllBody will have an empty byte at the end due to the content length mismatch.
+    assertNotEquals(req.readAllBody(), "123456789");
+  }
+
   private Request.Builder createRequestBuilder() {
     return new Request.Builder().setType(Request.Type.GET)
         .setUri("/test")

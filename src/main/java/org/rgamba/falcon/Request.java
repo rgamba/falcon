@@ -113,6 +113,11 @@ public class Request implements HttpMessage {
    * call this method and then try to read the inputstreamreader directly you might
    * get empty body.
    *
+   * <p>Do not use this method if expect a very large request body as it can consume
+   * considerable amount of resources given it will try and fit all the body on a
+   * String. You can first inspect {@link Request#getContentLength()} to see if the
+   * request body is too large.
+   *
    * @return string representation of the request body
    */
   public String readAllBody() {
@@ -121,7 +126,7 @@ public class Request implements HttpMessage {
     }
     StringBuffer body = new StringBuffer();
     long step = 1024;
-    long ceil = 0;
+    long ceil;
     long offset = 0;
     do {
       if (step > _contentLength - offset) {
@@ -134,7 +139,7 @@ public class Request implements HttpMessage {
         _bodyReader.read(buffer, 0, (int) ceil);
         body.append(buffer);
       } catch (IOException ex) {
-
+        break;
       }
       offset += ceil;
     } while (offset < _contentLength);
@@ -192,7 +197,6 @@ public class Request implements HttpMessage {
     try {
       this._bodyReader.close();
     } catch (IOException e) {
-
     }
   }
 
