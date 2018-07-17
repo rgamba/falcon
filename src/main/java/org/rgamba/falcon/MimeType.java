@@ -1,6 +1,5 @@
 package org.rgamba.falcon;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,16 +15,24 @@ public class MimeType {
   }
 
   /**
+   * Create a new MimeType object by parsing a mime type string.
+   *
+   * <p>It parses the given string as a media type value with any
+   * optional parameters, per per RFC 1521. Media types are the values
+   * present on the Content-Type and Content-Disposition HTTP Headers.
+   *
+   * <p>This is an example of a valid mime type string:
+   *
    * application/json; charset="utf-8"
    * +-----------------+--------+------+
    * media type        param    param
    *                   name     value
    *
-   * @param str
-   * @return
-   * @throws InvalidArgumentException
+   * @param str The mime type string to parse
+   * @return the new MimeType object
+   * @throws IllegalArgumentException if the string is a malformed mime type string
    */
-  public static MimeType fromString(String str) throws InvalidArgumentException {
+  public static MimeType fromString(String str) throws IllegalArgumentException {
     String[] parts = str.split(";", 2);
     final String mediaType = parts[0].toLowerCase().trim();
     Map<String, String> params = new HashMap<>();

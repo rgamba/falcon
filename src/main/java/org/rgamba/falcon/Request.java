@@ -1,5 +1,7 @@
 package org.rgamba.falcon;
 
+import org.rgamba.falcon.errors.BadRequest;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.SocketAddress;
@@ -31,6 +33,9 @@ public class Request implements HttpMessage {
   private final String _host;
   private final Long _contentLength;
   private final Map<String, List<String>> _queryParams;
+  private  Map<String, List<String>> _formData;
+
+  private final static long MAX_BODY_SIZE = (10 << 20); // 10 MB
 
   /**
    * New objects must be created using the {@link Builder}
@@ -142,7 +147,7 @@ public class Request implements HttpMessage {
         break;
       }
       offset += ceil;
-    } while (offset < _contentLength);
+    } while (offset < _contentLength && offset <= MAX_BODY_SIZE);
     return body.toString();
   }
 
@@ -198,6 +203,49 @@ public class Request implements HttpMessage {
       this._bodyReader.close();
     } catch (IOException e) {
     }
+  }
+
+  /**
+   * Parse the Content-Type header and return
+   * it as a new MimeType object that is easy to use.
+   */
+  public MimeType getContentType() {
+    try {
+      return MimeType.fromString(_headers.get("Content-Type").getName());
+    } catch (IllegalArgumentException e) {
+      return null;
+    }
+  }
+
+
+  public List<String> getFormData(String key) {
+    if (_formData == null) {
+      MimeType contentType = this.getContentType();
+      switch (contentType.getMediaType()) {
+        case "multipart/form-data":
+          if (contentType.getParam("boundary") == "") {
+            throw new BadRequest("expected multipart boundary");
+          }
+          parseMultipartFormData(contentType.getParam("boundary"));
+          break;
+        case "application/x-www-form-urlencoded":
+          parseUrlEncodedBody();
+          break;
+      }
+    }
+
+    if (!_formData.containsKey(key)) {
+      return new ArrayList<>();
+    }
+    return _formData.get(key);
+  }
+
+  private void parseUrlEncodedBody() {
+    String body = readAllBody();
+    _formData = HttpUtils.uriQueryStringToMap(body);
+  }
+
+  private void parseMultipartFormData(String boundary) {
   }
 
   /**
@@ -315,5 +363,6 @@ public class Request implements HttpMessage {
     public Request build() {
       return new Request(this);
     }
+
   }
 }

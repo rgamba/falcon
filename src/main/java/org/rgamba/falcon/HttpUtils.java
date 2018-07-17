@@ -1,5 +1,12 @@
 package org.rgamba.falcon;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 public class HttpUtils {
   private static boolean[] isToken = new boolean[127];
   static {
@@ -90,5 +97,28 @@ public class HttpUtils {
       }
     }
     return true;
+  }
+
+  public static Map<String, List<String>> uriQueryStringToMap(String uriQueryString) {
+    Map<String, List<String>> result = new HashMap<>();
+    String[] params = uriQueryString.split("&");
+    for (String param : params) {
+      String[] parts = param.split("=", 2);
+      final String paramName = urlDecode(parts[0]);
+      final String paramValue = parts.length > 1 ? urlDecode(parts[1]) : "";
+      if (!result.containsKey(paramName)) {
+        result.put(paramName, new ArrayList<>());
+      }
+      result.get(paramName).add(paramValue);
+    }
+    return result;
+  }
+
+  private static String urlDecode(String part) {
+    try {
+      return URLDecoder.decode(part, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      return "";
+    }
   }
 }

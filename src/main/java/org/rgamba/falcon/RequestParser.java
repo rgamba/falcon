@@ -56,7 +56,7 @@ public class RequestParser {
     Request.Builder reqBuilder = new Request.Builder().setType(getMessageType(messageType))
         .setUri(uri)
         .setPath(extractPathFromUri(uri))
-        .setQueryParams(uriQueryStringToMap(getUriQueryString(uri)))
+        .setQueryParams(HttpUtils.uriQueryStringToMap(getUriQueryString(uri)))
         .setRemoteAddress(_remoteAddress);
     /* URL part */
     URI url = null;
@@ -110,6 +110,7 @@ public class RequestParser {
 
     reqBuilder.setUrl(url);
     reqBuilder.setBodyReader(_inputReader);
+
     return reqBuilder.build();
   }
 
@@ -186,28 +187,5 @@ public class RequestParser {
       return "";
     }
     return parts[1].split("#", 2)[0];
-  }
-
-  private Map<String, List<String>> uriQueryStringToMap(String uriQueryString) {
-    Map<String, List<String>> result = new HashMap<>();
-    String[] params = uriQueryString.split("&");
-    for (String param : params) {
-      String[] parts = param.split("=", 2);
-      final String paramName = urlDecode(parts[0]);
-      final String paramValue = parts.length > 1 ? urlDecode(parts[1]) : "";
-      if (!result.containsKey(paramName)) {
-        result.put(paramName, new ArrayList<>());
-      }
-      result.get(paramName).add(paramValue);
-    }
-    return result;
-  }
-
-  private String urlDecode(String part) {
-    try {
-      return URLDecoder.decode(part, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      return "";
-    }
   }
 }

@@ -29,4 +29,14 @@ public class MimeTypeTest {
     assertEquals(MimeType.fromString(test2), expected2);
     assertEquals(MimeType.fromString(test3), expected3);
   }
+
+  @Test
+  public void testsSplitParameters() throws Exception {
+    String test1 = "application/json; url=\"http://\"; url*1=\"www.\"; url*2=google.com";
+    Map<String, String> params = new HashMap<>();
+    params.put("url", "http://www.google.com");
+    MimeType expected = new MimeType("application/json", params);
+
+    assertEquals(MimeType.fromString(test1), expected);
+  }
 }
