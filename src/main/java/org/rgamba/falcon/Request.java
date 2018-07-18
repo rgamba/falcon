@@ -1,5 +1,6 @@
 package org.rgamba.falcon;
 
+import org.apache.commons.fileupload.MultipartStream;
 import org.rgamba.falcon.errors.BadRequest;
 
 import java.io.IOException;
@@ -11,6 +12,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 
 
 /**
@@ -246,6 +248,22 @@ public class Request implements HttpMessage {
   }
 
   private void parseMultipartFormData(String boundary) {
+    try {
+      MultipartStream multipartStream = new MultipartStream(_bodyReader., boundary);
+      boolean nextPart = multipartStream.skipPreamble();
+      OutputStream output;
+      while(nextPart) {
+        String header = multipartStream.readHeaders();
+        // process headers
+        // create some output stream
+        multipartStream.readBodyData(output);
+        nextPart = multipartStream.readBoundary();
+      }
+    } catch(MultipartStream.MalformedStreamException e) {
+      // the stream failed to follow required syntax
+    } catch(IOException e) {
+      // a read or write error occurred
+    }
   }
 
   /**
