@@ -5,12 +5,7 @@ import org.rgamba.falcon.errors.BadRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.net.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -47,9 +42,9 @@ public class RequestParser {
    */
   public Request buildRequest() throws Exception {
     /*
-    First line:
-    GET /index.html HTTP/1.1
-    */
+     * First line:
+     * GET /index.html HTTP/1.1
+     */
     String[] requestLine = getRequestLine();
     final String messageType = requestLine[0];
     final String uri = requestLine[1];
@@ -58,7 +53,9 @@ public class RequestParser {
         .setPath(extractPathFromUri(uri))
         .setQueryParams(HttpUtils.uriQueryStringToMap(getUriQueryString(uri)))
         .setRemoteAddress(_remoteAddress);
-    /* URL part */
+    /*
+     * URL Part
+     */
     URI url = null;
     try {
       url = URI.create(uri);
@@ -66,9 +63,9 @@ public class RequestParser {
       throw new BadRequest("invalid URL format");
     }
     /*
-    Header lines in the format:
-    Key: Value
-    */
+     * Header lines in the format:
+     * Key: Value
+     */
     String headerStr;
     int headerCount = 0;
     while ((headerStr = getNextLine()) != null && headerCount < MAX_HEADERS) {
@@ -87,14 +84,14 @@ public class RequestParser {
     }
 
     /*
-    RFC 2616: Must treat
-    GET /index.html HTTP/1.1
-    Host: www.google.com
-     and
-    GET http://www.google.com/index.html HTTP/1.1
-    Host: ignore
-    the same. In the second case, any Host line is ignored.
-    */
+     * RFC 2616: Must treat:
+     *    GET /index.html HTTP/1.1
+     *    Host: www.google.com
+     * and
+     *    GET http://www.google.com/index.html HTTP/1.1
+     *    Host: ignore
+     * the same. In the second case, any Host line is ignored.
+     */
     if (url.getAuthority() == null && reqBuilder.headers.contains("Host")) {
       String newUri = reqBuilder.headers.get("Host").getValue();
       if (newUri.endsWith("/")) {
@@ -109,7 +106,7 @@ public class RequestParser {
     }
 
     reqBuilder.setUrl(url);
-    reqBuilder.setBodyReader(_inputReader);
+    reqBuilder.setInputStream(_inputStream);
 
     return reqBuilder.build();
   }

@@ -3,7 +3,9 @@ package org.rgamba.falcon;
 import org.apache.commons.fileupload.MultipartStream;
 import org.rgamba.falcon.errors.BadRequest;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.SocketAddress;
 import java.net.URI;
@@ -12,7 +14,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
 
 
 /**
@@ -28,6 +29,7 @@ public class Request implements HttpMessage {
   private final Type _type;
   private final Headers _headers;
   private final SocketAddress _remoteAddress;
+  private final InputStream _inputStream;
   private final InputStreamReader _bodyReader;
   private final String _uri;
   private final URI _url;
@@ -35,7 +37,7 @@ public class Request implements HttpMessage {
   private final String _host;
   private final Long _contentLength;
   private final Map<String, List<String>> _queryParams;
-  private  Map<String, List<String>> _formData;
+  private Map<String, List<String>> _formData;
 
   private final static long MAX_BODY_SIZE = (10 << 20); // 10 MB
 
@@ -46,7 +48,8 @@ public class Request implements HttpMessage {
     _type = builder.type;
     _headers = builder.headers;
     _remoteAddress = builder.remoteAddress;
-    _bodyReader = builder.bodyReader;
+    _inputStream = builder.inputStream;
+    _bodyReader = _inputStream != null ? new InputStreamReader(_inputStream) : null;
     _uri = builder.uri;
     _queryParams = builder.queryParams;
     _path = builder.path;
@@ -62,7 +65,8 @@ public class Request implements HttpMessage {
     _type = request.getType();
     _headers = request.getHeaders();
     _remoteAddress = request.getRemoteAddress();
-    _bodyReader = request.getBodyReader();
+    _inputStream = request.getInputStream();
+    _bodyReader = _inputStream != null ? new InputStreamReader(_inputStream) : null;
     _uri = request.getUri();
     _queryParams = request.getQueryParams();
     _path = request.getPath();
@@ -90,6 +94,10 @@ public class Request implements HttpMessage {
 
   public InputStreamReader getBodyReader() {
     return _bodyReader;
+  }
+
+  public InputStream getInputStream() {
+    return _inputStream;
   }
 
   public String getUri() {
@@ -155,6 +163,7 @@ public class Request implements HttpMessage {
 
   /**
    * Get a copy of all the query params for the current request
+   *
    * @return a list of all query parameters or an empty list if no parameters are found
    */
   public Map<String, List<String>> getQueryParams() {
@@ -184,25 +193,12 @@ public class Request implements HttpMessage {
   }
 
   /**
-   * Valid HTTP Message Types
+   * Close the InputStream and the input stream reader.
    */
-  public enum Type {
-    POST("POST"), GET("GET"), HEAD("HEAD"), PUT("PUT"), DELETE("DELETE"), OPTION("OPTION");
-
-    private final String name;
-
-    Type(String n) {
-      name = n;
-    }
-
-    public String toString() {
-      return name;
-    }
-  }
-
   public void close() {
     try {
-      this._bodyReader.close();
+      _bodyReader.close();
+      _inputStream.close();
     } catch (IOException e) {
     }
   }
@@ -213,13 +209,23 @@ public class Request implements HttpMessage {
    */
   public MimeType getContentType() {
     try {
-      return MimeType.fromString(_headers.get("Content-Type").getName());
+      return MimeType.fromString(_headers.get("Content-Type").getValue());
     } catch (IllegalArgumentException e) {
       return null;
     }
   }
 
-
+  /**
+   * The first time this method is called, it will try to decode the
+   * request body accoarding to the content-type header. If no decoding
+   * is possible, an Exception will be raised.
+   *
+   * <p>Note that calling this method will read all the content body
+   * on the first time, therefore you will not read the body directly again.
+   *
+   * @param key The parameter name to get
+   * @return String list of the parameter values.
+   */
   public List<String> getFormData(String key) {
     if (_formData == null) {
       MimeType contentType = this.getContentType();
@@ -233,6 +239,8 @@ public class Request implements HttpMessage {
         case "application/x-www-form-urlencoded":
           parseUrlEncodedBody();
           break;
+        default:
+          throw new IllegalArgumentException("unexpected content-type, unable to parse");
       }
     }
 
@@ -249,21 +257,55 @@ public class Request implements HttpMessage {
 
   private void parseMultipartFormData(String boundary) {
     try {
-      MultipartStream multipartStream = new MultipartStream(_bodyReader., boundary);
+      MultipartStream multipartStream = new MultipartStream(_inputStream, boundary.getBytes(), 1024, null);
       boolean nextPart = multipartStream.skipPreamble();
-      OutputStream output;
-      while(nextPart) {
-        String header = multipartStream.readHeaders();
+
+      while (nextPart) {
+        String headerString = multipartStream.readHeaders();
         // process headers
+        Headers headers = processMultipartHeaders(headerString);
+        MimeType contentDisposition = getContentDispositionMime(headers.get("Content-Disposition"));
+        //if (contentDisposition == null || contentDisposition.getMediaType() != "form-data"
+        //        || contentDisposition.getParam("name") == "") {
+        //  continue;
+        //}
         // create some output stream
-        multipartStream.readBodyData(output);
+        ByteArrayOutputStream body = new ByteArrayOutputStream();
+        multipartStream.readBodyData(body);
+        putFormData(contentDisposition.getParam("name"), body.toString());
         nextPart = multipartStream.readBoundary();
       }
-    } catch(MultipartStream.MalformedStreamException e) {
-      // the stream failed to follow required syntax
-    } catch(IOException e) {
-      // a read or write error occurred
+    } catch (MultipartStream.MalformedStreamException e) {
+      throw new BadRequest("malformed multipart stream");
+    } catch (IOException e) {
+      throw new InternalError("unexpected IO error: " + e.getMessage());
     }
+  }
+
+  private MimeType getContentDispositionMime(Header header) {
+    if (header == null) {
+      return null;
+    }
+    return MimeType.fromString(header.getValue());
+  }
+
+  private Headers processMultipartHeaders(String strHeaders) {
+    String[] h = strHeaders.split(HttpConstants.CRLF);
+    Headers result = new Headers();
+    for (String header : h) {
+      result.set(header);
+    }
+    return result;
+  }
+
+  private void putFormData(String key, String value) {
+    if (_formData == null) {
+      _formData = new HashMap<>();
+    }
+    if (!_formData.containsKey(key)) {
+      _formData.put(key, new ArrayList<>());
+    }
+    _formData.get(key).add(value);
   }
 
   /**
@@ -275,7 +317,7 @@ public class Request implements HttpMessage {
     private Type type;
     Headers headers = new Headers();
     private SocketAddress remoteAddress;
-    private InputStreamReader bodyReader;
+    private InputStream inputStream;
     private String uri;
     private String path;
     private String host;
@@ -290,7 +332,6 @@ public class Request implements HttpMessage {
       type = request.getType();
       headers = request.getHeaders();
       remoteAddress = request.getRemoteAddress();
-      bodyReader = request.getBodyReader();
       uri = request.getUri();
       queryParams = request.getQueryParams();
       path = request.getPath();
@@ -329,8 +370,8 @@ public class Request implements HttpMessage {
       return this;
     }
 
-    public Builder setBodyReader(InputStreamReader reader) {
-      this.bodyReader = reader;
+    public Builder setInputStream(InputStream input) {
+      this.inputStream = input;
       return this;
     }
 
@@ -381,6 +422,22 @@ public class Request implements HttpMessage {
     public Request build() {
       return new Request(this);
     }
+  }
 
+  /**
+   * Valid HTTP Message Types
+   */
+  public enum Type {
+    POST("POST"), GET("GET"), HEAD("HEAD"), PUT("PUT"), DELETE("DELETE"), OPTION("OPTION");
+
+    private final String name;
+
+    Type(String n) {
+      name = n;
+    }
+
+    public String toString() {
+      return name;
+    }
   }
 }
