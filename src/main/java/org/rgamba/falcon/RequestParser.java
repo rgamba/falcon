@@ -20,16 +20,18 @@ public class RequestParser {
   private final InputStream _inputStream;
   private final InputStreamReader _inputReader;
   private final SocketAddress _remoteAddress;
+  private final long _maxContentLength;
 
   /**
    * Constructor
    * @param inputStream As returned by the Socket client
    * @param remoteAddress The remote IP address
    */
-  RequestParser(InputStream inputStream, SocketAddress remoteAddress) {
+  RequestParser(InputStream inputStream, SocketAddress remoteAddress, long maxContentLength) {
     _inputStream = inputStream;
     _inputReader = new InputStreamReader(_inputStream);
     _remoteAddress = remoteAddress;
+    _maxContentLength = maxContentLength;
   }
 
   /**
@@ -80,9 +82,12 @@ public class RequestParser {
       headerCount++;
     }
     if (reqBuilder.headers.contains("Content-Length")) {
-      reqBuilder.setContentLength(Long.parseLong(reqBuilder.headers.get("Content-Length").getValue()));
+      long contentLength = Long.parseLong(reqBuilder.headers.get("Content-Length").getValue());
+      if (contentLength > _maxContentLength) {
+        throw new BadRequest("content length is too big");
+      }
+      reqBuilder.setContentLength(contentLength);
     }
-
     /*
      * RFC 2616: Must treat:
      *    GET /index.html HTTP/1.1

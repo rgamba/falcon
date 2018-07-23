@@ -16,8 +16,10 @@ public class HttpThread implements Runnable {
   private final InputStreamReader _inputReader;
   private final Function<Request, Response> _handler;
   private final MiddlewareSet _middlewareSet;
+  private final long _maxRequestContentLength;
 
-  HttpThread(Socket client, Function<Request, Response> handler, MiddlewareSet middlewareSet) throws IOException {
+  HttpThread(Socket client, Function<Request, Response> handler, MiddlewareSet middlewareSet,
+      long maxRequestContentLength) throws IOException {
     _client = client;
     _output = _client.getOutputStream();
     _input = _client.getInputStream();
@@ -25,13 +27,15 @@ public class HttpThread implements Runnable {
     _inputReader = new InputStreamReader(_input);
     _handler = handler;
     _middlewareSet = middlewareSet;
+    _maxRequestContentLength = maxRequestContentLength;
   }
 
   @Override
   public void run() {
     Response response = null;
     try {
-      Request request = new RequestParser(_input, _client.getRemoteSocketAddress()).buildRequest();
+      Request request =
+          new RequestParser(_input, _client.getRemoteSocketAddress(), _maxRequestContentLength).buildRequest();
       /* Apply request middleware */
       request = _middlewareSet.processRequest(request);
       /* Apply request handler */

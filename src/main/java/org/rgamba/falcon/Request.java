@@ -265,14 +265,16 @@ public class Request implements HttpMessage {
         // process headers
         Headers headers = processMultipartHeaders(headerString);
         MimeType contentDisposition = getContentDispositionMime(headers.get("Content-Disposition"));
-        //if (contentDisposition == null || contentDisposition.getMediaType() != "form-data"
-        //        || contentDisposition.getParam("name") == "") {
-        //  continue;
-        //}
-        // create some output stream
-        ByteArrayOutputStream body = new ByteArrayOutputStream();
-        multipartStream.readBodyData(body);
-        putFormData(contentDisposition.getParam("name"), body.toString());
+
+        if (encapsulationIsFile(contentDisposition)) {
+          // Skip file requests
+          // TODO: add support for file uploads
+          multipartStream.discardBodyData();
+        } else {
+          ByteArrayOutputStream body = new ByteArrayOutputStream();
+          multipartStream.readBodyData(body);
+          putFormData(contentDisposition.getParam("name"), body.toString());
+        }
         nextPart = multipartStream.readBoundary();
       }
     } catch (MultipartStream.MalformedStreamException e) {
@@ -280,6 +282,10 @@ public class Request implements HttpMessage {
     } catch (IOException e) {
       throw new InternalError("unexpected IO error: " + e.getMessage());
     }
+  }
+
+  private boolean encapsulationIsFile(MimeType contentDisposition) {
+    return contentDisposition != null && contentDisposition.containsParam("filename");
   }
 
   private MimeType getContentDispositionMime(Header header) {

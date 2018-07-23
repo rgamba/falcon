@@ -10,15 +10,17 @@ import java.util.function.Function;
 
 public class HttpServer {
   private static final int MAX_THREADS = 10;
+  private static final long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 10240; // 10 MB
+  private static final int DEFAULT_PORT = 8080;
   private final ExecutorService _threadPool = Executors.newCachedThreadPool();
   private final int _port;
   private final MiddlewareSet _middlewareSet;
+  private long _maxRequestContentLength = DEFAULT_MAX_REQUEST_CONTENT_LENGTH;
   private Function<Request, Response> _handler;
   private ServerSocket _socketServer;
 
   public HttpServer() {
-    _port = 8080;
-    _middlewareSet = new MiddlewareSet();
+    this(DEFAULT_PORT, new MiddlewareSet());
   }
 
   public HttpServer(int port, MiddlewareSet middlewareSet) {
@@ -36,14 +38,36 @@ public class HttpServer {
     this(port, middlewareSet, router::handle);
   }
 
+  /**
+   * Set the handler to call whenever a new request comes in.
+   * @param handler The handler to call
+   */
   public void setHandler(Function<Request, Response> handler) {
     _handler = handler;
   }
 
-  public void setHandler(Router router) {
+  /**
+   * Same as setHandler but instead of using a plain functional interface as
+   * a handler, we'll use a {@link Router}.
+   * @param router The router instance.
+   */
+  public void setRouter(Router router) {
     setHandler(router::handle);
   }
 
+  /**
+   * Set the max request size in bytes.
+   * @param sizeInBytes The request's content length must be less than this number.
+   */
+  public void setMaxRequestSize(long sizeInBytes) {
+    _maxRequestContentLength = sizeInBytes;
+  }
+
+  /**
+   * Listen to new HTTP connections.
+   * This will block the thread. If this is an issue, be sure to create a new
+   * Thread and execute this in that thread.
+   */
   public void listen() {
     openSocketServer();
     while (true) {
@@ -67,7 +91,7 @@ public class HttpServer {
   private void createNewThread(Socket client) throws IOException {
     System.out.println("Creating new thread for client: " + client);
     client.setSoTimeout(5000);
-    Runnable httpThread = new HttpThread(client, _handler, _middlewareSet);
+    Runnable httpThread = new HttpThread(client, _handler, _middlewareSet, _maxRequestContentLength);
     _threadPool.execute(httpThread);
   }
 }

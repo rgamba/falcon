@@ -10,22 +10,6 @@ import static org.testng.Assert.*;
 
 
 public class RequestTest {
-  private static final String multipart_body = ""
-          + "----AaB03x\r\n"
-          + "Content-Disposition: form-data; name=\"submit-name\"\r\n"
-          + "\r\n"
-          + "Ricardo\r\n"
-          + "----AaB03x\r\n"
-          + "Content-Disposition: form-data; name=\"lastname\"\r\n"
-          + "\r\n"
-          + "Gamba Lavin\r\n"
-          + "----AaB03x\r\n"
-          + "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\"\r\n"
-          + "Content-Type: text/plain\r\n"
-          + "\r\n"
-          + "HELLO WORLD!\r\n"
-          + "----AaB03x--\r\n";
-
   @Test
   public void testRequestBuilder() {
     Request req = createRequestBuilder().build();
@@ -37,9 +21,7 @@ public class RequestTest {
 
   @Test
   public void testQueryParams() {
-    Request req = createRequestBuilder()
-            .setQueryParam("name", "ricardo")
-            .build();
+    Request req = createRequestBuilder().setQueryParam("name", "ricardo").build();
 
     assertEquals(req.getQueryParam("name").get(0), "ricardo");
     assertEquals(req.getQueryParam("name").size(), 1);
@@ -47,11 +29,10 @@ public class RequestTest {
 
   @Test
   public void testQueryParamsMultiple() {
-    Request req = createRequestBuilder()
-            .setQueryParam("names", "ricardo")
-            .setQueryParam("names", "rodrigo")
-            .setQueryParam("lastname", "gamba")
-            .build();
+    Request req = createRequestBuilder().setQueryParam("names", "ricardo")
+        .setQueryParam("names", "rodrigo")
+        .setQueryParam("lastname", "gamba")
+        .build();
 
     assertEquals(req.getQueryParam("names").get(0), "ricardo");
     assertEquals(req.getQueryParam("names").get(1), "rodrigo");
@@ -98,16 +79,37 @@ public class RequestTest {
     assertNotEquals(req.readAllBody(), "123456789");
   }
 
+  //@formatter:off
+  private static final String multipartBody = ""
+      + "----AaB03x\r\n"
+      + "Content-Disposition: form-data; name=\"submit-name\"\r\n"
+      + "\r\n"
+      + "Ricardo\r\n"
+      + "----AaB03x\r\n"
+      + "Content-Disposition: form-data; name=\"lastname\"\r\n"
+      + "\r\n"
+      + "Gamba Lavin\r\n"
+      + "----AaB03x\r\n"
+      + "Content-Disposition: form-data; name=\"files\"; filename=\"file1.txt\"\r\n"
+      + "Content-Type: text/plain\r\n"
+      + "\r\n"
+      + "HELLO WORLD!\r\n"
+      + "----AaB03x--\r\n";
+  //@formatter:on
+
   @Test
   public void testGetParamMultipartFormData() {
     Request.Builder reqBuilder = createRequestBuilder();
-    InputStream in = new ByteArrayInputStream(multipart_body.getBytes());
-    reqBuilder.setInputStream(in).setContentLength((long) multipart_body.length())
-            .setHeader("Content-Type: multipart/form-data; boundary=--AaB03x");
+    InputStream in = new ByteArrayInputStream(multipartBody.getBytes());
+    reqBuilder.setInputStream(in)
+        .setContentLength((long) multipartBody.length())
+        .setHeader("Content-Type: multipart/form-data; boundary=--AaB03x");
     Request req = reqBuilder.build();
 
     assertEquals(req.getFormData("submit-name").get(0), "Ricardo");
     assertEquals(req.getFormData("lastname").get(0), "Gamba Lavin");
+    // Test that we skip files
+    assertEquals(req.getFormData("files").size(), 0);
   }
 
   @Test
@@ -115,8 +117,9 @@ public class RequestTest {
     Request.Builder reqBuilder = createRequestBuilder();
     String requestQuery = "name=Ricardo&last-name=Gamba+Lavin";
     InputStream in = new ByteArrayInputStream(requestQuery.getBytes());
-    reqBuilder.setInputStream(in).setContentLength((long) requestQuery.length())
-            .setHeader("Content-Type: application/x-www-form-urlencoded");
+    reqBuilder.setInputStream(in)
+        .setContentLength((long) requestQuery.length())
+        .setHeader("Content-Type: application/x-www-form-urlencoded");
     Request req = reqBuilder.build();
 
     assertEquals(req.getFormData("name").get(0), "Ricardo");
@@ -125,9 +128,9 @@ public class RequestTest {
 
   private Request.Builder createRequestBuilder() {
     return new Request.Builder().setType(Request.Type.GET)
-            .setUri("/test")
-            .setHeader("Content-Type: text/html")
-            .setHeader("Server: Test")
-            .setRemoteAddress(null);
+        .setUri("/test")
+        .setHeader("Content-Type: text/html")
+        .setHeader("Server: Test")
+        .setRemoteAddress(null);
   }
 }

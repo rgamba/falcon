@@ -127,6 +127,10 @@ public class MimeType {
     return _mediaType;
   }
 
+  public boolean containsParam(String paramName) {
+    return _params.containsKey(paramName);
+  }
+
   public String getParam(String paramName) {
     if (!_params.containsKey(paramName)) {
       return "";
