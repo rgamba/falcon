@@ -2,10 +2,11 @@ package org.rgamba.falcon;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 
 public class HttpUtils {
   private static boolean[] isToken = new boolean[127];
@@ -97,6 +98,23 @@ public class HttpUtils {
       }
     }
     return true;
+  }
+
+  /**
+   * Format the given date to a string format allowed and expected
+   * by HTTP, RFC 822. See:
+   * https://tools.ietf.org/html/rfc2616#page-20
+   *
+   * @param date the Date we want to format
+   * @return String the formatted string ready to use
+   */
+  static String formatDate(Date date) {
+    return new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss Z", Locale.US).format(date);
+  }
+
+  static String formatDate(ZonedDateTime date) {
+    String pattern = "EEE, dd MMM yyyy HH:mm:ss Z";
+    return date.format(DateTimeFormatter.ofPattern(pattern));
   }
 
   public static Map<String, List<String>> uriQueryStringToMap(String uriQueryString) {

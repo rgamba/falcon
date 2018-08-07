@@ -2,9 +2,7 @@ package org.rgamba.falcon;
 
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 
 /**
@@ -54,7 +52,7 @@ public class Response implements HttpMessage {
 
   private void setDefaultHeaders() {
     _headers.set("Server", HttpConstants.DEFAULT_HEADER_SERVER_NAME);
-    _headers.set("Date", HttpMessage.formatDate(new Date()));
+    _headers.set("Date", HttpUtils.formatDate(new Date()));
     _headers.set("Content-Type", HttpConstants.DEFAULT_HEADER_CONTENT_TYPE);
   }
 
@@ -106,6 +104,7 @@ public class Response implements HttpMessage {
     private Headers headers = new Headers();
     private int status_code = 200;
     private String body;
+    private List<Cookie> cookies = new ArrayList<>();
 
     public Builder() {
 
@@ -137,8 +136,16 @@ public class Response implements HttpMessage {
       return this;
     }
 
+    public Builder setCookie(Cookie cookie) {
+      this.cookies.add(cookie);
+      return this;
+    }
+
     public Response build() {
       setContentLength();
+      cookies.forEach((cookie) -> {
+        headers.set("Set-Cookie", cookie.toString());
+      });
       return new Response(this);
     }
 
